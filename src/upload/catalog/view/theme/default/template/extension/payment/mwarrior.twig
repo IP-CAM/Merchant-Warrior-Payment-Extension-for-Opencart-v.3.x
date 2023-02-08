@@ -1,0 +1,262 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.3/js/bootstrapValidator.min.js"></script>
+<br>
+<form id="paymentDetails" action="" method="post">
+    <div class="content" id="payment">
+        <div class="row form-group">
+            <div class="col-xs-5">
+                <label>{{ entry_cc_owner }}</label>
+            </div>
+      
+            <div class="col-xs-7">
+                <input type="text" id="mwarrior_cc_name" name="mwarrior_cc_name" value="" class="form-control" placeholder="Card Owner" />
+            </div>
+        </div>
+  
+        <div class="row form-group">
+            <div class="col-xs-5">
+                <label>{{ entry_cc_number }}</label>
+            </div>
+          
+            <div class="col-xs-7">
+                <input type="text" id="mwarrior_cc_number" name="mwarrior_cc_number" value="" class="form-control numericOnly" placeholder="Card Number" />
+            </div>
+        </div>
+        
+        <div class="row form-group">
+            <div class="col-xs-5">
+                <label>{{ entry_cc_expire_date }}</label>
+            </div>
+        
+            <div class="col-sm-4">
+                <div class="form-group">
+                    <select id="mwarrior_cc_expire_month" name="mwarrior_cc_expire_month" class="form-control" placeholder="Expiry Month">
+                        {% for month in months %}
+                            <option value="{{ month.value }}">{{ month.text }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        
+            <div class="col-sm-3">
+                <div class="form-group">
+                    <select id="mwarrior_cc_expire_year" name="mwarrior_cc_expire_year" class="form-control" placeholder="Expiry Year">
+                        {% for year in year_expire %}
+                            <option value="{{ year.value }}">{{ year.text }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row form-group">
+            <div class="col-xs-5">
+                <label>{{ entry_cc_cvv2 }}</label>
+            </div>
+        
+            <div class="col-xs-4">
+                <input type="text" id="mwarrior_cc_cvv2" name="mwarrior_cc_cvv2" value="" size="3" class="form-control numericOnly" placeholder="Card CVV Number" />
+            </div>
+        </div>
+    </div>
+    
+    <div class="row form-group buttons">
+        <div class="col-xs-4">
+            <button id="button-confirm" disabled="disabled" class="btn btn-primary">{{ button_confirm }} <span class="glyphicon glyphicon-check"></span></button>
+        </div>
+    </div>
+</form>
+
+<script>
+
+// For allowing only numberic input in the card number and CVV number fields
+$(".numericOnly").keypress(function (e) {
+    if (String.fromCharCode(e.keyCode).match(/[^0-9]/g)) return false;
+});
+
+// Select the current month and year in the expiry date dropdown
+var currentDate = new Date();
+var currentMonth = currentDate.getMonth();
+currentMonth = parseInt(currentMonth, 10);
+++currentMonth;
+currentMonth = String('0000' + currentMonth).slice(-2);
+var currentYear = currentDate.getFullYear();
+
+// Set the value of Card Expiry Date field to the current MM/YYYY
+$("#mwarrior_cc_expire_month").val(currentMonth);
+$("#mwarrior_cc_expire_year").val(currentYear);
+
+// Data Validation
+var cardData = [];
+cardData["cardOwnerNameLength"] = 0;
+cardData["cardNumberLength"] = 0;
+cardData["cardCVVLength"] = 0;
+cardData["selectedMonth"] = currentMonth;
+cardData["selectedYear"] = currentYear;
+
+// Get the input fields length
+$('#mwarrior_cc_name').on("input", function() {
+    cardData["cardOwnerNameLength"] = this.value.length;
+    validateFields();
+});
+
+$('#mwarrior_cc_number').on("input", function() {
+    cardData["cardNumberLength"] = this.value.length;
+    validateFields();
+});
+
+$('#mwarrior_cc_cvv2').on("input", function() {
+    cardData["cardCVVLength"] = this.value.length;
+    validateFields();
+});
+
+// Check if the length is valid when user leaves the field'
+$('#mwarrior_cc_name').on("focusout", function() {
+    if(cardData["cardOwnerNameLength"] && cardData["cardOwnerNameLength"] < 3) {
+        if ( !$( ".invalidCardName" ).length ) {
+            $('<span class="glyphicon glyphicon-remove text-danger invalidCardName"></span><span class="text-danger invalidCardName"> Please enter a valid name (Minimum 3 characters)</span>').insertAfter( $(this));
+            $('#button-confirm').attr('disabled', true);
+        }
+    } else {
+        $( ".invalidCardName" ).remove();
+    }
+});
+
+$('#mwarrior_cc_number').on("focusout", function() {
+    var enteredCardNumber = $(this);
+    enteredCardNumber = enteredCardNumber.val();
+    validateCreditCardNumber = valid_credit_card(enteredCardNumber);
+  
+    if(cardData["cardNumberLength"] && cardData["cardNumberLength"] < 13 || cardData["cardNumberLength"] > 16) {
+        if ( !$( ".invalidCardNumber" ).length ) {
+            if(!validateCreditCardNumber) {
+                $('<span class="glyphicon glyphicon-remove text-danger invalidCardNumber"></span><span class="text-danger invalidCardNumber"> Please enter a valid card number</span>').insertAfter( $(this));
+                $('#button-confirm').attr('disabled', true);
+            }
+        }
+    } else {
+        $( ".invalidCardNumber" ).remove();
+    }
+});
+
+$('#mwarrior_cc_cvv2').on("focusout", function() {
+    if(cardData["cardCVVLength"] && cardData["cardCVVLength"] < 3 || cardData["cardCVVLength"] > 4) {
+        if ( !$( ".invalidCCVNumber" ).length ) {
+            $('<span class="glyphicon glyphicon-remove text-danger invalidCCVNumber"></span><span class="text-danger invalidCCVNumber"> Please enter a valid CCV number</span>').insertAfter( $(this));
+            $('#button-confirm').attr('disabled', true);
+        }
+    } else {
+        $( ".invalidCCVNumber" ).remove();
+    }
+});
+
+function validateFields() {
+    if (cardData["cardOwnerNameLength"] > 2 && cardData["cardNumberLength"] > 12 && cardData["cardNumberLength"] < 17 && cardData["cardCVVLength"] > 2 && cardData["cardCVVLength"] < 5 && ((parseInt(cardData["selectedMonth"]) >= parseInt(currentMonth) && parseInt(cardData["selectedYear"]) >= parseInt(currentYear)) || (parseInt(cardData["selectedYear"]) > parseInt(currentYear)))) {
+        $('#button-confirm').attr('disabled', false);
+    } else {
+        $('#button-confirm').attr('disabled', true);
+    }
+}
+
+function valid_credit_card(value) {
+    // accept only digits, dashes or spaces
+    if (/[^0-9-\s]+/.test(value)) return false;
+  
+    // The Luhn Algorithm. It's so pretty.
+    var nCheck = 0, nDigit = 0, bEven = false;
+    value = value.replace(/\D/g, "");
+  
+    for (var n = value.length - 1; n >= 0; n--) {
+        var cDigit = value.charAt(n),
+            nDigit = parseInt(cDigit, 10);
+    
+        if (bEven) {
+            if ((nDigit *= 2) > 9) nDigit -= 9;
+        }
+    
+        nCheck += nDigit;
+        bEven = !bEven;
+    }
+
+    return (nCheck % 10) == 0;
+}
+
+$("#mwarrior_cc_expire_month").change( function validateExpiryMonth() {
+    cardData["selectedMonth"] = $(this);
+    cardData["selectedMonth"] = cardData["selectedMonth"].val();
+    validateFields();
+});
+
+$("#mwarrior_cc_expire_year").change( function validateExpiryYear() {
+    cardData["selectedYear"] = $(this);
+    cardData["selectedYear"] = cardData["selectedYear"].val();
+    validateFields();
+});
+
+// Processing the payment
+$('#button-confirm').bind('click', function() {
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?route=extension/payment/mwarrior/send',
+        dataType: 'json',
+        data: $('#payment :input'),
+        beforeSend: function() {
+            $('#button-confirm').html('Processing Payment <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>');
+            $('#button-confirm').attr('disabled', true);
+        },
+        complete: function() {
+            $('#button-confirm').html('{{ button_confirm }} <span class="glyphicon glyphicon-check"></span>');
+        },
+        success: function(json) {
+            if (json['error']) {
+                // Reset the cardData object
+                for (var prop in cardData) {
+                    if(cardData.hasOwnProperty(prop)) {
+                        cardData[prop] = 0;
+                    }
+                }
+      
+                $('#content').prepend('<div id="processingError" class="alert alert-danger fade in"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><i class="fa fa-times" aria-hidden="true"></i> ' + json['error'] + '</div>');
+                $("#processingError").fadeTo(2000, 500).slideUp(500, function(){
+                    $("#processingError").alert('close');
+                });
+      
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+                $('#paymentDetails')[0].reset();
+      
+                // Set the value of Card Expiry Date field to the current MM/YYYY
+                $("#mwarrior_cc_expire_month").val(currentMonth);
+                $("#mwarrior_cc_expire_year").val(currentYear);
+            }
+    
+            if (json['success']) {
+                location = json['success'];
+            }
+       },
+       error: function(json) {
+            if (json['error']) {
+                // Reset the cardData object
+                for (var prop in cardData) {
+                    if(cardData.hasOwnProperty(prop)) {
+                        cardData[prop] = 0;
+                    }
+                }
+      
+                $('#content').prepend('<div id="processingError" class="alert alert-danger fade in"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><i class="fa fa-times" aria-hidden="true"></i> ' + json['error'] + '</div>');
+                $("#processingError").fadeTo(2000, 500).slideUp(500, function(){
+                    $("#processingError").alert('close');
+                });
+                $("html, body").animate({ scrollTop: 0 }, "slow");
+                $('#paymentDetails')[0].reset();
+      
+                // Set the value of Card Expiry Date field to the current MM/YYYY
+                $("#mwarrior_cc_expire_month").val(currentMonth);
+                $("#mwarrior_cc_expire_year").val(currentYear);
+            }
+ 
+            if (json['success']) {
+                location = json['success'];
+            }
+        },
+    });
+});
+</script>

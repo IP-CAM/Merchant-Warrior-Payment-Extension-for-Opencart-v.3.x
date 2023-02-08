@@ -1,0 +1,66 @@
+<br>
+
+<div class="row form-group">
+    <div class="col-xs-12">
+        {{ text_hosted_payments_info }}
+    </div>
+</div>
+
+<div class="row form-group buttons">
+    <div class="col-xs-12">
+        <button id="button-confirm" type="button" disabled="disabled" class="btn btn-primary">{{ button_confirm }} <span class="glyphicon glyphicon-check"></span></button>
+    </div>
+</div>
+
+<div id="mwarrior-form-container" style="display:none!important;">
+</div>
+
+
+<script>
+    
+var mwarrior = {
+    displayError: function(text) {
+        $('#content').prepend('<div id="processingError" class="alert alert-danger fade in"><a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a><i class="fa fa-times" aria-hidden="true"></i> ' + test + '</div>');
+        $("#processingError").fadeTo(10000, 500).slideUp(500, function(){
+            $("#processingError").alert('close');
+        });
+
+        $("html, body").animate({ scrollTop: 0 }, "slow");
+    }
+};
+    
+
+// Processing the payment
+$('#button-confirm').bind('click', function() {
+    $.ajax({
+        type: 'POST',
+        url: 'index.php?route=extension/payment/mwarrior/hosted_payments_form',
+        dataType: 'json',
+        data: [],
+        beforeSend: function() {
+            $('#button-confirm').html('Processing Payment <i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>');
+            $('#button-confirm').attr('disabled', true);
+        },
+        complete: function() {
+            $('#button-confirm').html('{{ button_confirm }} <span class="glyphicon glyphicon-check"></span>');
+        },
+        success: function(json) {
+            if (json['error']) {
+                mwarrior.displayError(json['error']);
+            }
+ 
+            if (json['success']) {
+                $('#mwarrior-form-container').html(json['success']);
+                $('#mwarrior-form-container form').submit();
+                
+            }
+        },
+        error: function(xhr, status, error) {
+            let err_text = 'Error: '+status+ ' : ' + error;
+            mwarrior.displayError(err_text);
+            console.debug(err_text);
+            console.debug(xhr);
+        },
+    });
+});
+</script>
