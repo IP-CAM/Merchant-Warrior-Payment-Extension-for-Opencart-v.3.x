@@ -1,4 +1,4 @@
-# opencart-merchant-warrior
+# Opencart Merchant Warrior
 
 This extension (payment module) adds support for the Merchant Warrior payment gateway for your OpenCart store ( https://www.merchantwarrior.com/ ).
 
@@ -10,4 +10,15 @@ This particular version of the extension is basically a conversion of this free 
 But it also improved by integrating the optional support of the "hosted payments" feature (which also supports 3-D Secure).
 
 
-If you need any support for the extension, please contact at support@liveopencart.com
+## Installation 
+Supported opencart version: 3.x
+- Install the module package merchantwarrior.ocmod.zip using the standard opencart extension installer. 
+- Enable (install) the extension in the list of payment modules.
+- Set API key, merchant UID, password, etc. and enable the module on the module setting page.
+
+
+## Support and modification 
+
+The extension is free to use, copy and/or modify. 
+
+If you need any assistance, please contact at support@liveopencart.com
